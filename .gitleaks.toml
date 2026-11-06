@@ -1,0 +1,15 @@
+title = "Android lab: secrets and literal IP address protection"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "literal-ipv4-address"
+description = "Do not publish literal IPv4 addresses"
+regex = '''\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'''
+
+[[rules]]
+id = "assigned-api-credential"
+description = "API keys and access credentials assigned in source or configuration"
+regex = '''(?i)(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*["']([a-z0-9/+_.=-]{12,})["']'''
+secretGroup = 1

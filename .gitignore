@@ -34,3 +34,11 @@ proguard-project.txt
 # Android Studio/IDEA
 *.iml
 .idea
+.security-reports/
+__pycache__/
+.env
+.env.*
+*.pem
+*.key
+*.jks
+*.keystore

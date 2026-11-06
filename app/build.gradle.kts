@@ -16,18 +16,18 @@
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    jacoco
 }
 
 android {
     namespace = "com.example.unscramble"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.unscramble"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -50,9 +50,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         compose = true
     }
@@ -64,6 +61,14 @@ android {
 }
 
 dependencies {
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.material3:material3")
@@ -76,4 +81,48 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+jacoco { toolVersion = "0.8.14" }
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+val debugClasses = files(
+    layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"),
+    layout.buildDirectory.dir("tmp/kotlin-classes/debug"),
+    layout.buildDirectory.dir("intermediates/javac/debug/compileDebugJavaWithJavac/classes")
+)
+
+tasks.register<JacocoReport>("jacocoGameViewModelReport") {
+    dependsOn("testDebugUnitTest")
+    executionData.setFrom(layout.buildDirectory.file("jacoco/testDebugUnitTest.exec"))
+    classDirectories.setFrom(debugClasses)
+    sourceDirectories.setFrom(files("src/main/java"))
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+
+tasks.register<JacocoCoverageVerification>("verifyGameViewModelCoverage") {
+    dependsOn("jacocoGameViewModelReport")
+    executionData.setFrom(layout.buildDirectory.file("jacoco/testDebugUnitTest.exec"))
+    classDirectories.setFrom(debugClasses)
+    violationRules {
+        rule {
+            element = "CLASS"
+            includes = listOf("com.example.unscramble.ui.GameViewModel")
+            for (metric in listOf("LINE", "BRANCH", "INSTRUCTION", "METHOD")) {
+                limit {
+                    counter = metric
+                    minimum = "1.0".toBigDecimal()
+                }
+            }
+        }
+    }
 }
